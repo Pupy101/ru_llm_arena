@@ -34,7 +34,7 @@ def compute_ratings(df: pd.DataFrame, initial: float = 1000., base: float = 10.,
         df['model_a'],
         df['model_b'],
         df['winner'],
-        weights=df['answer_len_delta'] * 2,
+        weights=(df['answer_len_delta'] * 2).tolist(),
         tolerance=1e-8
     )
 
@@ -101,12 +101,12 @@ def get_win_rate_column(df, column, baseline=BASELINE_MODEL_NAME):
     return win_rate_table[baseline].fillna(0.5).apply(lambda x: round(x * 100, 2))
 
 
-def get_battles_from_judgment(judge_name, answers_lengths, first_game_only=False, WEIGHT=3, length_controlled=False):
+def get_battles_from_judgment(judge_name, answers_lengths, first_game_only=False, WEIGHT=3, length_controlled=False, bench_name="arena-hard-v0.1"):
     arena_hard_battles = pd.DataFrame()
 
     print("Turning judgment results into battles...")
 
-    directory = f"data/arena-hard-v0.1/model_judgment/{judge_name}"
+    directory = f"data/{bench_name}/model_judgment/{judge_name}"
     assert os.path.exists(directory)
     for file in tqdm(glob(f"{directory}/*jsonl")):
         df = pd.read_json(file, lines=True)
@@ -232,7 +232,7 @@ if __name__ == "__main__":
         battles = pd.read_json("data/arena_hard_battles.jsonl", lines=True)
     else:
         battles = get_battles_from_judgment(args.judge_name, models_answers_lengths, args.first_game_only, args.weight,
-                                            args.length_control)
+                                            args.length_control, bench_name=args.bench_name)
 
     bootstrap_ratings = compute_ratings(battles)
 
