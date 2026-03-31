@@ -105,6 +105,10 @@ def judgment(**args):
                 args["endpoint_dict"],
             )
 
+            if new_judgment is None:
+                score = None
+                break
+
             judgment += ("\n" + new_judgment)
 
             score, try_again = get_score(judgment, args["regex_pattern"])
