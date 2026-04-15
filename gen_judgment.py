@@ -4,6 +4,7 @@ import argparse
 import os
 import re
 import concurrent.futures
+import threading
 
 from tqdm import tqdm
 
@@ -126,9 +127,10 @@ def judgment(**args):
             "score":score
         }
         output["games"].append(result)
-
-    with open(output_file, "a") as f:
-        f.write(json.dumps(output, ensure_ascii=False) + "\n")
+        
+    with args['lock']:
+        with open(output_file, "a") as f:
+            f.write(json.dumps(output, ensure_ascii=False) + "\n")
 
 
 if __name__ == "__main__":
@@ -177,6 +179,8 @@ if __name__ == "__main__":
 
     endpoint_info = endpoint_list[configs["judge_model"]]
 
+    file_locks = {model: threading.Lock() for model in models}
+
     with concurrent.futures.ThreadPoolExecutor(max_workers=endpoint_info["parallel"]) as executor:
         futures = []
         for model in models:
@@ -208,6 +212,8 @@ if __name__ == "__main__":
                 kwargs["endpoint_dict"] = endpoint_info
                 kwargs["output_file"] = output_files[model]
                 kwargs["regex_pattern"] = pattern
+                kwargs["lock"] = file_locks[model]
+
                 future = executor.submit(judgment, **kwargs)
                 futures.append(future)
 
